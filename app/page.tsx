@@ -107,7 +107,7 @@ export default function Home() {
   }, [files])
 
   return (
-    <main className="min-h-screen p-4 md:p-8 max-w-4xl mx-auto">
+    <main className="min-h-screen p-4 md:p-8 max-w-4xl mx-auto bg-background">
       <Toaster position="top-center" />
       
       <header className="mb-8">
@@ -146,7 +146,7 @@ export default function Home() {
 
       <motion.div
         {...getRootProps()}
-        className={`group relative border-2 border-dashed rounded-[16px] p-8 text-center cursor-pointer transition-all
+        className={`group relative border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all
           ${isDragActive ? 'border-primary bg-primary/10' : 'border-outline'}
           ${isCompressing ? 'opacity-50 cursor-not-allowed' : ''}`}
         whileHover={{ scale: 1.02 }}
