@@ -5,6 +5,10 @@ import imageCompression from 'browser-image-compression'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Toaster, toast } from 'react-hot-toast'
 import { CheckCircle, AlertCircle, Loader2, UploadCloud, ImageIcon, Settings, Download } from 'lucide-react'
+import Header from './components/Header'
+import FileUploadArea from './components/FileUploadArea'
+import CompressedFilesList from './components/CompressedFilesList'
+import CompressionHistory from './components/CompressionHistory'
 
 type FileWithPreview = File & { preview: string }
 type CompressionPreset = 'website' | 'shopify' | 'wordpress' | 'printing'
@@ -107,75 +111,19 @@ export default function Home() {
   }, [files])
 
   return (
-    <main className="min-h-screen p-4 md:p-8 max-w-4xl mx-auto bg-background">
+    <main className="min-h-screen p-6 md:p-8 max-w-6xl mx-auto bg-background">
       <Toaster position="top-center" />
       
-      <header className="mb-8">
-        <motion.h1 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-3xl md:text-4xl font-medium text-on-background mb-4"
-        >
-          Image Compressor
-        </motion.h1>
+      <Header preset={preset} setPreset={setPreset} uploadMode={uploadMode} setUploadMode={setUploadMode} />
 
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-2">
-            {Object.keys(PRESET_CONFIG).map((key) => (
-              <button
-                key={key}
-                onClick={() => setPreset(key as CompressionPreset)}
-                className={`p-2 rounded-lg text-sm transition-colors
-                  ${preset === key 
-                    ? 'bg-primary text-on-primary' 
-                    : 'bg-surface-container-highest text-on-surface-variant hover:bg-surface-container-high'}`}
-              >
-                {key.charAt(0).toUpperCase() + key.slice(1)}
-              </button>
-            ))}
-          </div>
-
-          <button
-            onClick={() => setUploadMode(mode => mode === 'single' ? 'bulk' : 'single')}
-            className="p-2 rounded-lg bg-surface-container-highest text-on-surface-variant text-sm hover:bg-surface-container-high transition-colors"
-          >
-            Mode: {uploadMode === 'single' ? 'Single File' : 'Bulk Upload'}
-          </button>
-        </div>
-      </header>
-
-      <motion.div
-        {...getRootProps()}
-        className={`group relative border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all
-          ${isDragActive ? 'border-primary bg-primary/10' : 'border-outline'}
-          ${isCompressing ? 'opacity-50 cursor-not-allowed' : ''}`}
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-      >
-        <input {...getInputProps()} aria-label="File upload" />
-        <div className="space-y-4">
-          <div className="flex justify-center">
-            <motion.div 
-              className="p-4 rounded-full bg-primary/10"
-              animate={{ rotate: isCompressing ? 360 : 0 }}
-              transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
-            >
-              <UploadCloud 
-                className={`h-8 w-8 ${isCompressing ? 'text-primary' : 'text-outline'}`} 
-                strokeWidth={1.5}
-              />
-            </motion.div>
-          </div>
-          <div className="space-y-2">
-            <p className="text-lg font-medium text-on-background">
-              {isCompressing ? 'Compressing...' : 'Drag & drop images here'}
-            </p>
-            <p className="text-sm text-on-surface-variant">
-              {uploadMode === 'single' ? 'Single file' : 'Multiple files'} • Max 5MB • {preset} preset
-            </p>
-          </div>
-        </div>
-      </motion.div>
+      <FileUploadArea
+        isCompressing={isCompressing}
+        isDragActive={isDragActive}
+        getRootProps={getRootProps}
+        getInputProps={getInputProps}
+        uploadMode={uploadMode}
+        preset={preset}
+      />
 
       <AnimatePresence>
         {isCompressing && (
@@ -201,97 +149,10 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      <section className="mt-8 space-y-6">
-        {compressedFiles.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <h2 className="text-xl font-medium text-on-background mb-4">Compressed Files</h2>
-            <div className="grid gap-4">
-              {compressedFiles.map((file, index) => (
-                <motion.div
-                  key={file.name}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="p-4 bg-surface-container-lowest rounded-xl shadow-elevation-1"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="flex-shrink-0">
-                      <div className="w-12 h-12 bg-surface-container-high rounded-lg flex items-center justify-center">
-                        <ImageIcon className="h-5 w-5 text-on-surface-variant" />
-                      </div>
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-on-background truncate">{files[index].name}</p>
-                      <p className="text-sm text-on-surface-variant">
-                        {formatSize(files[index].size)} → {formatSize(file.size)}
-                        <span className="mx-2">•</span>
-                        {Math.round((1 - file.size / files[index].size) * 100)}% smaller
-                      </p>
-                    </div>
-                    
-                    <a
-                      href={URL.createObjectURL(file)}
-                      download={`compressed_${file.name}`}
-                      className="ml-4 px-4 py-2 bg-primary text-on-primary rounded-full shadow-elevation-1 hover:shadow-elevation-2 transition-all flex items-center gap-2"
-                    >
-                      <Download className="h-4 w-4" />
-                      <span className="hidden md:inline">Download</span>
-                    </a>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {history.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="bg-surface-container-lowest rounded-xl p-4"
-          >
-            <h3 className="text-lg font-medium text-on-background mb-4">History</h3>
-            <div className="space-y-3">
-              {history.slice(-5).reverse().map((item, index) => (
-                <div 
-                  key={item.timestamp}
-                  className="flex items-center justify-between p-3 bg-surface-container-high rounded-lg"
-                >
-                  <div>
-                    <p className="text-on-background truncate">{item.originalName}</p>
-                    <p className="text-sm text-on-surface-variant">
-                      {formatSize(item.compressedSize)} • {new Date(item.timestamp).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <span className="text-sm text-primary">
-                    -{Math.round((1 - item.compressedSize / item.originalSize) * 100)}%
-                  </span>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
+      <section className="mt-12 space-y-8">
+        {compressedFiles.length > 0 && <CompressedFilesList files={files} compressedFiles={compressedFiles} />}
+        {history.length > 0 && <CompressionHistory history={history} />}
       </section>
-
-      <AnimatePresence>
-        {files.length === 0 && !isCompressing && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="mt-12 text-center text-on-surface-variant"
-          >
-            <div className="mb-4 inline-block rounded-xl p-4 bg-surface-container-highest">
-              <ImageIcon className="h-12 w-12 mx-auto" />
-            </div>
-            <p className="text-lg">Drop images to compress</p>
-            <p className="text-sm">Supports JPEG, PNG • {PRESET_CONFIG[preset].maxSizeMB}MB max</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </main>
   )
 }
